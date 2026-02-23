@@ -5,463 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>מערכת סיכום ביקורת</title>
 <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-<style>
-  :root {
-    --teal: #7EC8C8;
-    --teal-light: #B8E4E4;
-    --teal-dark: #5AACAC;
-    --orange: #F4A261;
-    --orange-light: #FAD5B5;
-    --orange-dark: #E07B3A;
-    --bg: #F7FAFA;
-    --surface: #FFFFFF;
-    --text: #2C3E50;
-    --text-light: #7F8C8D;
-    --border: #D9ECEC;
-    --shadow: 0 2px 12px rgba(126,200,200,0.15);
-    --radius: 10px;
-  }
-
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-
-  body {
-    font-family: 'Heebo', sans-serif;
-    background: var(--bg);
-    color: var(--text);
-    min-height: 100vh;
-    direction: rtl;
-  }
-
-  header {
-    background: linear-gradient(135deg, var(--teal-dark) 0%, var(--teal) 100%);
-    color: white;
-    padding: 20px 40px;
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    box-shadow: 0 4px 16px rgba(90,172,172,0.3);
-  }
-
-  header .logo {
-    width: 44px; height: 44px;
-    background: rgba(255,255,255,0.25);
-    border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 22px;
-  }
-
-  header h1 { font-size: 22px; font-weight: 700; letter-spacing: 0.5px; }
-  header p { font-size: 13px; opacity: 0.85; font-weight: 300; }
-
-  .progress-bar {
-    background: var(--surface);
-    border-bottom: 1px solid var(--border);
-    padding: 0 40px;
-    display: flex;
-    gap: 0;
-    overflow-x: auto;
-  }
-
-  .step {
-    padding: 14px 20px;
-    font-size: 13px;
-    font-weight: 500;
-    color: var(--text-light);
-    border-bottom: 3px solid transparent;
-    white-space: nowrap;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    transition: all 0.3s;
-  }
-
-  .step.active {
-    color: var(--teal-dark);
-    border-bottom-color: var(--teal);
-  }
-
-  .step.done {
-    color: var(--teal);
-  }
-
-  .step-num {
-    width: 22px; height: 22px;
-    border-radius: 50%;
-    background: var(--border);
-    color: var(--text-light);
-    font-size: 11px;
-    display: flex; align-items: center; justify-content: center;
-    font-weight: 700;
-    flex-shrink: 0;
-  }
-
-  .step.active .step-num { background: var(--teal); color: white; }
-  .step.done .step-num { background: var(--teal-light); color: var(--teal-dark); }
-
-  .container {
-    max-width: 860px;
-    margin: 0 auto;
-    padding: 36px 24px;
-  }
-
-  .screen { display: none; }
-  .screen.active { display: block; }
-
-  .card {
-    background: var(--surface);
-    border-radius: var(--radius);
-    padding: 32px;
-    box-shadow: var(--shadow);
-    margin-bottom: 24px;
-    border: 1px solid var(--border);
-  }
-
-  .card-title {
-    font-size: 17px;
-    font-weight: 700;
-    color: var(--teal-dark);
-    margin-bottom: 8px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
-
-  .card-title::before {
-    content: '';
-    display: block;
-    width: 4px; height: 20px;
-    background: var(--orange);
-    border-radius: 2px;
-    flex-shrink: 0;
-  }
-
-  .card-subtitle {
-    font-size: 13px;
-    color: var(--text-light);
-    margin-bottom: 24px;
-  }
-
-  /* Audit type selection */
-  .audit-types {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 14px;
-  }
-
-  .audit-type-card {
-    border: 2px solid var(--border);
-    border-radius: var(--radius);
-    padding: 20px;
-    cursor: pointer;
-    transition: all 0.25s;
-    position: relative;
-    background: var(--bg);
-    user-select: none;
-  }
-
-  .audit-type-card:hover:not(.disabled) {
-    border-color: var(--teal);
-    background: var(--teal-light);
-    transform: translateY(-2px);
-  }
-
-  .audit-type-card.selected {
-    border-color: var(--teal-dark);
-    background: linear-gradient(135deg, #E8F7F7 0%, #D0EEEE 100%);
-  }
-
-  .audit-type-card.disabled {
-    opacity: 0.4;
-    cursor: not-allowed;
-  }
-
-  .audit-type-card.selected::after {
-    content: '✓';
-    position: absolute;
-    top: 10px;
-    left: 10px;
-    width: 22px; height: 22px;
-    background: var(--teal-dark);
-    color: white;
-    border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 12px;
-    font-weight: 700;
-  }
-
-  .audit-type-card h3 { font-size: 15px; font-weight: 600; margin-bottom: 6px; }
-  .audit-type-card p { font-size: 12px; color: var(--text-light); }
-  .coming-soon {
-    font-size: 11px;
-    background: var(--orange-light);
-    color: var(--orange-dark);
-    padding: 2px 8px;
-    border-radius: 20px;
-    display: inline-block;
-    margin-top: 6px;
-    font-weight: 500;
-  }
-
-  /* Form elements */
-  .form-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 18px;
-  }
-
-  .form-group {
-    display: flex;
-    flex-direction: column;
-    gap: 7px;
-  }
-
-  .form-group.full { grid-column: 1 / -1; }
-
-  label {
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--text);
-  }
-
-  input[type="text"], input[type="date"], select, textarea {
-    border: 1.5px solid var(--border);
-    border-radius: 8px;
-    padding: 10px 14px;
-    font-family: 'Heebo', sans-serif;
-    font-size: 14px;
-    color: var(--text);
-    background: var(--bg);
-    transition: border-color 0.2s, box-shadow 0.2s;
-    direction: rtl;
-    width: 100%;
-  }
-
-  input:focus, select:focus, textarea:focus {
-    outline: none;
-    border-color: var(--teal);
-    box-shadow: 0 0 0 3px rgba(126,200,200,0.2);
-    background: white;
-  }
-
-  textarea { resize: vertical; min-height: 90px; }
-
-  /* Questions */
-  .topic-section {
-    margin-bottom: 28px;
-  }
-
-  .topic-title {
-    font-size: 15px;
-    font-weight: 700;
-    color: var(--teal-dark);
-    padding: 10px 14px;
-    background: linear-gradient(135deg, var(--teal-light) 0%, #D5EEEE 100%);
-    border-radius: 8px;
-    margin-bottom: 12px;
-    border-right: 4px solid var(--teal-dark);
-  }
-
-  .question-item {
-    border: 1.5px solid var(--border);
-    border-radius: 8px;
-    padding: 16px;
-    margin-bottom: 10px;
-    background: var(--surface);
-    transition: border-color 0.2s;
-  }
-
-  .question-item:hover { border-color: var(--teal-light); }
-
-  .question-text {
-    font-size: 14px;
-    font-weight: 500;
-    margin-bottom: 12px;
-    line-height: 1.6;
-  }
-
-  .question-text em {
-    font-style: normal;
-    font-weight: 700;
-    color: var(--teal-dark);
-  }
-
-  .rating-buttons {
-    display: flex;
-    gap: 8px;
-    margin-bottom: 10px;
-    flex-wrap: wrap;
-  }
-
-  .rating-btn {
-    padding: 7px 16px;
-    border-radius: 20px;
-    border: 1.5px solid var(--border);
-    font-family: 'Heebo', sans-serif;
-    font-size: 13px;
-    font-weight: 500;
-    cursor: pointer;
-    background: var(--bg);
-    color: var(--text-light);
-    transition: all 0.2s;
-  }
-
-  .rating-btn:hover { border-color: var(--teal); color: var(--teal-dark); }
-
-  .rating-btn.selected-1 { background: #D4EDDA; border-color: #5DB87A; color: #2D7A4B; }
-  .rating-btn.selected-2 { background: #FFF3CD; border-color: #FFC107; color: #8A6200; }
-  .rating-btn.selected-3 { background: #FDECEA; border-color: #E57373; color: #C62828; }
-
-  .question-notes {
-    border: 1.5px solid var(--border);
-    border-radius: 6px;
-    padding: 8px 12px;
-    font-family: 'Heebo', sans-serif;
-    font-size: 13px;
-    width: 100%;
-    background: var(--bg);
-    color: var(--text);
-    resize: vertical;
-    min-height: 60px;
-    display: none;
-    direction: rtl;
-    margin-top: 8px;
-  }
-
-  .question-notes.visible { display: block; }
-
-  /* Buttons */
-  .btn {
-    padding: 12px 28px;
-    border-radius: 8px;
-    font-family: 'Heebo', sans-serif;
-    font-size: 15px;
-    font-weight: 600;
-    cursor: pointer;
-    border: none;
-    transition: all 0.2s;
-  }
-
-  .btn-primary {
-    background: linear-gradient(135deg, var(--teal) 0%, var(--teal-dark) 100%);
-    color: white;
-    box-shadow: 0 4px 12px rgba(90,172,172,0.35);
-  }
-
-  .btn-primary:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 18px rgba(90,172,172,0.45);
-  }
-
-  .btn-secondary {
-    background: transparent;
-    color: var(--teal-dark);
-    border: 1.5px solid var(--teal);
-  }
-
-  .btn-secondary:hover { background: var(--teal-light); }
-
-  .btn-orange {
-    background: linear-gradient(135deg, var(--orange) 0%, var(--orange-dark) 100%);
-    color: white;
-    box-shadow: 0 4px 12px rgba(244,162,97,0.35);
-  }
-
-  .btn-orange:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 18px rgba(244,162,97,0.45);
-  }
-
-  .nav-buttons {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-top: 8px;
-  }
-
-  /* Summary output */
-  .summary-output {
-    background: #FAFFFE;
-    border: 1.5px solid var(--border);
-    border-radius: var(--radius);
-    padding: 32px;
-    font-size: 14px;
-    line-height: 2;
-    white-space: pre-wrap;
-    font-family: 'Heebo', sans-serif;
-    direction: rtl;
-    color: var(--text);
-  }
-
-  .copy-btn-wrap {
-    display: flex;
-    justify-content: flex-end;
-    margin-bottom: 12px;
-  }
-
-  .page-title {
-    font-size: 26px;
-    font-weight: 700;
-    color: var(--text);
-    margin-bottom: 6px;
-  }
-
-  .page-subtitle {
-    font-size: 14px;
-    color: var(--text-light);
-    margin-bottom: 32px;
-  }
-
-  .alert {
-    background: #FFF3CD;
-    border: 1px solid #FFD700;
-    border-radius: 8px;
-    padding: 12px 16px;
-    font-size: 13px;
-    color: #7A5800;
-    margin-bottom: 20px;
-  }
-
-  .section-divider {
-    height: 1px;
-    background: var(--border);
-    margin: 24px 0;
-  }
-
-  @media (max-width: 600px) {
-    .audit-types { grid-template-columns: 1fr; }
-    .form-grid { grid-template-columns: 1fr; }
-    .container { padding: 20px 14px; }
-    header { padding: 16px 20px; }
-  }
-
-  .badge {
-    display: inline-block;
-    padding: 3px 10px;
-    border-radius: 20px;
-    font-size: 12px;
-    font-weight: 600;
-    background: var(--teal-light);
-    color: var(--teal-dark);
-    margin-right: 8px;
-  }
-
-  .findings-preview {
-    margin-top: 16px;
-  }
-
-  .finding-chip {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    background: #FDECEA;
-    border: 1px solid #E57373;
-    border-radius: 20px;
-    padding: 4px 12px;
-    font-size: 12px;
-    color: #C62828;
-    margin: 4px;
-  }
-</style>
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
 
@@ -503,10 +47,14 @@
         <p>שיחות חתך עם חיילים ומפקדים</p>
         <span class="coming-soon">בפיתוח</span>
       </div>
-      <div class="audit-type-card disabled" data-type="telb">
+      <div class="audit-type-card" data-type="telb" onclick="toggleTelb(this)">
         <h3>📊 תל"ב</h3>
-        <p>ביקורת תל"ב</p>
-        <span class="coming-soon">בפיתוח</span>
+        <p>ביקורת תל"ב – ליבה, מתקדם, מומחיות</p>
+        <div id="telb-subtypes" style="display:none; margin-top:12px; display:none; flex-direction:column; gap:8px;">
+          <div class="telb-sub selected" data-sub="liba" onclick="selectTelbSub(event,'liba')">ליבה</div>
+          <div class="telb-sub disabled-sub" data-sub="advanced" onclick="selectTelbSub(event,'advanced')">מתקדם <span class="coming-soon">בפיתוח</span></div>
+          <div class="telb-sub disabled-sub" data-sub="expert" onclick="selectTelbSub(event,'expert')">מומחיות <span class="coming-soon">בפיתוח</span></div>
+        </div>
       </div>
     </div>
 
@@ -523,10 +71,10 @@
 
     <div class="card">
       <div class="card-title">נתוני הביקורת</div>
-      <div class="card-subtitle">כל השדות חשובים לדוח הסיכום הסופי</div>
+      <div class="card-subtitle">כל השדות הם שדות חובה <span style="color:#E57373;">*</span></div>
       <div class="form-grid">
         <div class="form-group">
-          <label for="location">מיקום</label>
+          <label for="location">מיקום <span class="required-star">*</span></label>
           <select id="location">
             <option value="">-- בחר מיקום --</option>
             <option>בא"ח</option>
@@ -537,23 +85,23 @@
           </select>
         </div>
         <div class="form-group">
-          <label for="date">תאריך</label>
+          <label for="date">תאריך <span class="required-star">*</span></label>
           <input type="date" id="date">
         </div>
         <div class="form-group full">
-          <label for="subject">נושא</label>
+          <label for="subject">נושא <span class="required-star">*</span></label>
           <input type="text" id="subject" placeholder="נושא הביקורת">
         </div>
         <div class="form-group">
-          <label for="coordination">תיאום מול</label>
+          <label for="coordination">תיאום מול <span class="required-star">*</span></label>
           <input type="text" id="coordination" placeholder="שם הגורם המתואם">
         </div>
         <div class="form-group">
-          <label for="inspector">מי ביקר</label>
+          <label for="inspector">מי ביקר <span class="required-star">*</span></label>
           <input type="text" id="inspector" placeholder="שם המבקר/ים">
         </div>
         <div class="form-group full">
-          <label for="participants">משתתפים</label>
+          <label for="participants">משתתפים <span class="required-star">*</span></label>
           <input type="text" id="participants" placeholder="שמות המשתתפים בביקורת">
         </div>
       </div>
@@ -573,6 +121,7 @@
     <div class="card">
       <div class="card-title">מטרת הביקורת</div>
       <div class="form-group">
+        <label for="audit-goal">מטרת הביקורת <span class="required-star">*</span></label>
         <textarea id="audit-goal" rows="6" placeholder="תאר את מטרות הביקורת..."></textarea>
       </div>
     </div>
@@ -586,7 +135,7 @@
   <!-- SCREEN 4: Questions -->
   <div class="screen" id="screen-4">
     <div class="page-title">שאלות ביקורת</div>
-    <div class="page-subtitle">סמן 1-3 לכל שאלה: קיים / קיים חלקית / לא קיים</div>
+    <div class="page-subtitle">חובה לענות על כל השאלות. בדירוג 2 ו-3 יש למלא הערות חובה.</div>
 
     <div id="questions-container"></div>
 
@@ -604,13 +153,14 @@
     <div class="card">
       <div class="card-title">מהלך הביקורת</div>
       <div class="form-group">
+        <label for="audit-progress">מהלך הביקורת <span class="required-star">*</span></label>
         <textarea id="audit-progress" rows="7" placeholder="תאר את מהלך הביקורת..."></textarea>
       </div>
     </div>
 
     <div class="nav-buttons">
       <button class="btn btn-secondary" onclick="goToScreen(4)">→ חזור</button>
-      <button class="btn btn-primary" onclick="buildSummaryScreen(); goToScreen(6)">צור סיכום ←</button>
+      <button class="btn btn-primary" onclick="goToScreen(6)">צור סיכום ←</button>
     </div>
   </div>
 
@@ -629,375 +179,29 @@
 
     <div class="copy-btn-wrap" style="margin-top:24px; gap: 12px; display:flex; justify-content: flex-end;">
       <button class="btn btn-secondary" onclick="goToScreen(5)">→ חזור</button>
-      <button class="btn btn-orange" onclick="copyOutput()">📋 העתק סיכום מלא</button>
+      <button class="btn btn-orange" id="copy-btn" onclick="copyOutput()">📋 העתק סיכום מלא</button>
     </div>
 
     <div id="final-output-wrap" style="margin-top:16px;">
       <div class="card-title" style="margin-bottom:12px; font-size:15px;">תצוגה מקדימה של הסיכום</div>
       <div class="summary-output" id="final-output"></div>
     </div>
+
+    <!-- Appendix -->
+    <div class="card" style="margin-top:32px;">
+      <div class="card-title">נספח ליקויים מלא</div>
+      <div class="card-subtitle">טבלה מלאה של כל שאלות הביקורת, הדירוג שנבחר וההערות</div>
+      <div style="display:flex; gap:10px; justify-content:flex-end; margin-bottom:14px;">
+        <button class="btn btn-secondary" id="copy-appendix-btn" onclick="copyAppendix()">📋 העתק נספח</button>
+        <button class="btn btn-orange" onclick="downloadAppendix()">⬇️ הורד כ-CSV</button>
+      </div>
+      <div id="appendix-container"></div>
+    </div>
+
   </div>
 
 </div>
 
-<script>
-// Data
-const auditTypes = {
-  digital: 'קמפוס דיגיטלי',
-  tik: 'תיקי יסוד'
-};
-
-const questions = {
-  digital: {
-    title: 'קמפוס דיגיטלי',
-    topics: [
-      {
-        title: '1. קורסי אב',
-        questions: [
-          'האם קיימים קורסי אב התואמים את <em>תיק היסוד</em>?',
-          'האם <em>כלי הערכה</em> מקושרים ממאגר התוכן היחידתי בעץ ניהול ההדרכה, אל קורס האב: מבחנים, דפי תצפית, משוב?',
-          'האם <em>המידע המקצועי</em> מקושר מהתוכן אשר מופיע בתיק היסוד?',
-          'האם <em>המשקלים</em> בעץ ההערכה תואמים את תיק היסוד?',
-          'האם <em>המבחנים המתוקפים</em> נמצאים בקורס האב והאם נעשה שימוש ע"ג המערכת?'
-        ]
-      },
-      {
-        title: '2. ניהול תוכן',
-        questions: [
-          'האם קיימים <em>מצגות, סרטונים, לומדות</em> ושיעורים התומכים את נושאי הלימוד וההדרכה ולא קיימים בו תכנים שאינם הדרכתיים?',
-          'האם קיימים <em>מאגרי שאלות</em> לפי נושאים, השאלות מוגדרות לפי רמת קושי וסיווג רלוונטי?'
-        ]
-      },
-      {
-        title: '3. פיתוח סגל',
-        questions: [
-          'האם מתקיימת במהלך הכנת הסגל <em>הדרכה בנושא הקמפוס הדיגיטלי לסגל</em> - הזנות על חניכים, שימוש בדוחות, שימוש בלו"ז ועוד?'
-        ]
-      },
-      {
-        title: '4. ניהול סביבת למידה',
-        questions: [
-          'האם מבצעים <em>סיכומי מחזור</em> לשם זיכרון ארגוני? (כולל שאלוני משוב לחניכים וסיכום כתוב הכולל הפק"ל)'
-        ]
-      }
-    ]
-  },
-  tik: {
-    title: 'תיקי יסוד',
-    topics: [
-      {
-        title: '1. תכנית ההכשרה',
-        questions: [
-          'האם לקחים ושינויים עקרוניים בתכניות ההכשרה מעודכנים בתיקי היסוד?',
-          'האם <em>תכניות הכשרה</em> מתקיימות בפועל בהתאמה לתיקי היסוד?',
-          'האם לקראת כל מחזור הכשרה מתקיים <em>אישור תוכניות</em> אל מול תיק יסוד?'
-        ]
-      },
-      {
-        title: '2. מארזי הדרכה',
-        questions: [
-          'האם מוגדרות <em>מטרות הדרכתיות</em> במארזי ההדרכה ומבנה יחידת הלימוד והשיטה מותאמים להשגת המטרות?',
-          '<em>מערכי השיעור</em> כוללים הנחיות מקצועיות והדרכתיות מספקות למדריך, ובמידת הצורך מותאמים להעברת השיעור עם מצגת/עזרים אחרים?'
-        ]
-      },
-      {
-        title: '3. מבחנים',
-        questions: [
-          'לכל מבחן עיוני קיימת הגדרה של נושא המבחן והמשקל היחסי שלהם במבחן (כמו טבלת מתאר)?',
-          'קיימים <em>דפי הערכה</em> למבחן מעשי (תפעול אמצעים, התנסויות פיקודיות/הדרכתיות)?',
-          'האם <em>המבחנים המעשיים והעיוניים</em> מאושרים על ידי גורם תורתי/מקצועי והדרכתי?'
-        ]
-      }
-    ]
-  }
-};
-
-// State
-let state = {
-  selectedTypes: [],
-  answers: {}, // key: "type_topicIdx_qIdx" => {rating: 1|2|3, notes: ""}
-  summaryTexts: {} // key: type => text
-};
-
-function toggleType(el) {
-  if (el.classList.contains('disabled')) return;
-  const type = el.dataset.type;
-  el.classList.toggle('selected');
-  if (state.selectedTypes.includes(type)) {
-    state.selectedTypes = state.selectedTypes.filter(t => t !== type);
-  } else {
-    state.selectedTypes.push(type);
-  }
-}
-
-function goToScreen(n) {
-  if (n === 1) {
-    // ok
-  } else if (n === 2) {
-    if (state.selectedTypes.length === 0) {
-      alert('יש לבחור לפחות סוג ביקורת אחד');
-      return;
-    }
-  }
-
-  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-  document.getElementById('screen-' + n).classList.add('active');
-
-  // Update progress
-  for (let i = 1; i <= 6; i++) {
-    const step = document.getElementById('step-' + i);
-    step.classList.remove('active', 'done');
-    if (i < n) step.classList.add('done');
-    if (i === n) step.classList.add('active');
-  }
-
-  if (n === 4) buildQuestionsScreen();
-  window.scrollTo(0, 0);
-}
-
-function stripHtml(html) {
-  return html.replace(/<[^>]+>/g, '');
-}
-
-function buildQuestionsScreen() {
-  const container = document.getElementById('questions-container');
-  container.innerHTML = '';
-
-  state.selectedTypes.forEach(type => {
-    if (!questions[type]) return;
-    const auditData = questions[type];
-
-    const typeHeader = document.createElement('div');
-    typeHeader.innerHTML = `<div style="font-size:18px; font-weight:700; color:var(--orange-dark); margin-bottom:20px; margin-top:12px; display:flex; align-items:center; gap:10px;"><span style="background:var(--orange-light); padding:4px 14px; border-radius:20px;">${auditData.title}</span></div>`;
-    container.appendChild(typeHeader);
-
-    const card = document.createElement('div');
-    card.className = 'card';
-    card.style.marginBottom = '24px';
-
-    auditData.topics.forEach((topic, topicIdx) => {
-      const topicDiv = document.createElement('div');
-      topicDiv.className = 'topic-section';
-
-      const topicTitle = document.createElement('div');
-      topicTitle.className = 'topic-title';
-      topicTitle.textContent = topic.title;
-      topicDiv.appendChild(topicTitle);
-
-      topic.questions.forEach((q, qIdx) => {
-        const key = `${type}_${topicIdx}_${qIdx}`;
-        if (!state.answers[key]) state.answers[key] = { rating: 0, notes: '' };
-
-        const qItem = document.createElement('div');
-        qItem.className = 'question-item';
-
-        const qText = document.createElement('div');
-        qText.className = 'question-text';
-        qText.innerHTML = q;
-
-        const ratingDiv = document.createElement('div');
-        ratingDiv.className = 'rating-buttons';
-
-        const ratings = [
-          { val: 1, label: '1 – קיים', cls: 'selected-1' },
-          { val: 2, label: '2 – קיים חלקית', cls: 'selected-2' },
-          { val: 3, label: '3 – לא קיים', cls: 'selected-3' }
-        ];
-
-        const notesArea = document.createElement('textarea');
-        notesArea.className = 'question-notes';
-        notesArea.placeholder = 'הערות (אופציונלי)...';
-        notesArea.value = state.answers[key].notes;
-        notesArea.addEventListener('input', e => {
-          state.answers[key].notes = e.target.value;
-        });
-
-        ratings.forEach(r => {
-          const btn = document.createElement('button');
-          btn.className = 'rating-btn';
-          btn.textContent = r.label;
-          if (state.answers[key].rating === r.val) {
-            btn.classList.add(r.cls);
-            if (r.val === 3) notesArea.classList.add('visible');
-          }
-          btn.addEventListener('click', () => {
-            ratingDiv.querySelectorAll('.rating-btn').forEach(b => b.className = 'rating-btn');
-            btn.classList.add(r.cls);
-            state.answers[key].rating = r.val;
-            if (r.val === 3) {
-              notesArea.classList.add('visible');
-            } else {
-              notesArea.classList.remove('visible');
-            }
-          });
-          ratingDiv.appendChild(btn);
-        });
-
-        qItem.appendChild(qText);
-        qItem.appendChild(ratingDiv);
-        qItem.appendChild(notesArea);
-        topicDiv.appendChild(qItem);
-      });
-
-      card.appendChild(topicDiv);
-    });
-
-    container.appendChild(card);
-  });
-}
-
-function buildSummaryScreen() {
-  const sectionsDiv = document.getElementById('summary-type-sections');
-  sectionsDiv.innerHTML = '';
-
-  state.selectedTypes.forEach(type => {
-    const typeName = auditTypes[type] || type;
-    const card = document.createElement('div');
-    card.className = 'card';
-
-    const titleDiv = document.createElement('div');
-    titleDiv.className = 'card-title';
-    titleDiv.textContent = typeName;
-
-    const subtitle = document.createElement('div');
-    subtitle.className = 'card-subtitle';
-    subtitle.textContent = 'מלל חופשי לסיכום סוג ביקורת זה';
-
-    const ta = document.createElement('textarea');
-    ta.rows = 5;
-    ta.style.width = '100%';
-    ta.style.border = '1.5px solid var(--border)';
-    ta.style.borderRadius = '8px';
-    ta.style.padding = '10px 14px';
-    ta.style.fontFamily = 'Heebo, sans-serif';
-    ta.style.fontSize = '14px';
-    ta.style.direction = 'rtl';
-    ta.style.resize = 'vertical';
-    ta.placeholder = `פרט ממצאים לגבי ${typeName}...`;
-    ta.value = state.summaryTexts[type] || '';
-    ta.addEventListener('input', e => {
-      state.summaryTexts[type] = e.target.value;
-      updateFinalOutput();
-    });
-
-    card.appendChild(titleDiv);
-    card.appendChild(subtitle);
-    card.appendChild(ta);
-    sectionsDiv.appendChild(card);
-  });
-
-  // Build findings
-  const findingsDiv = document.getElementById('findings-preview');
-  findingsDiv.innerHTML = '';
-  const findings = getFindings();
-  if (findings.length === 0) {
-    findingsDiv.innerHTML = '<p style="color:var(--text-light); font-size:13px;">לא נמצאו ליקויים (לא סומנו שאלות כ"לא קיים")</p>';
-  } else {
-    findings.forEach(f => {
-      const chip = document.createElement('div');
-      chip.className = 'finding-chip';
-      chip.style.display = 'flex';
-      chip.style.flexDirection = 'column';
-      chip.style.alignItems = 'flex-start';
-      chip.style.borderRadius = '8px';
-      chip.style.margin = '6px 0';
-      chip.style.padding = '8px 14px';
-      chip.innerHTML = `<span style="font-weight:600;">• ${f.text}</span>${f.notes ? `<span style="font-size:11px; color:#888; margin-top:3px;">(${f.notes})</span>` : ''}`;
-      findingsDiv.appendChild(chip);
-    });
-  }
-
-  updateFinalOutput();
-}
-
-function getFindings() {
-  const findings = [];
-  Object.keys(state.answers).forEach(key => {
-    const ans = state.answers[key];
-    if (ans.rating === 3) {
-      const parts = key.split('_');
-      const type = parts[0];
-      const topicIdx = parseInt(parts[1]);
-      const qIdx = parseInt(parts[2]);
-      if (questions[type] && questions[type].topics[topicIdx]) {
-        const rawQ = questions[type].topics[topicIdx].questions[qIdx];
-        findings.push({
-          text: stripHtml(rawQ),
-          notes: ans.notes
-        });
-      }
-    }
-  });
-  return findings;
-}
-
-function updateFinalOutput() {
-  const loc = document.getElementById('location').value;
-  const date = document.getElementById('date').value;
-  const subject = document.getElementById('subject').value;
-  const coord = document.getElementById('coordination').value;
-  const inspector = document.getElementById('inspector').value;
-  const participants = document.getElementById('participants').value;
-  const goal = document.getElementById('audit-goal').value;
-  const progress = document.getElementById('audit-progress').value;
-
-  let dateFormatted = date;
-  if (date) {
-    const d = new Date(date);
-    dateFormatted = d.toLocaleDateString('he-IL');
-  }
-
-  let output = '';
-  output += `ביקורת ${state.selectedTypes.map(t => auditTypes[t]).join(' + ')}\n`;
-  output += `═══════════════════════════════════\n\n`;
-  output += `מיקום: ${loc || '___'}\n`;
-  output += `תאריך: ${dateFormatted || '___'}\n`;
-  output += `נושא: ${subject || '___'}\n`;
-  output += `תיאום מול: ${coord || '___'}\n`;
-  output += `מי ביקר: ${inspector || '___'}\n`;
-  output += `משתתפים: ${participants || '___'}\n`;
-  output += `\nמטרת הביקורת:\n${goal || '___'}\n`;
-  output += `\nמהלך הביקורת:\n${progress || '___'}\n`;
-  output += `\n═══════════════════════════════════\n`;
-  output += `סיכום וממצאים\n`;
-  output += `═══════════════════════════════════\n\n`;
-
-  state.selectedTypes.forEach(type => {
-    const typeName = auditTypes[type] || type;
-    output += `${typeName}:\n`;
-    output += `${state.summaryTexts[type] || '___'}\n\n`;
-  });
-
-  const findings = getFindings();
-  if (findings.length > 0) {
-    output += `ליקויים:\n`;
-    findings.forEach(f => {
-      output += `• ${f.text}`;
-      if (f.notes) output += ` (${f.notes})`;
-      output += '\n';
-    });
-    output += '\n';
-  }
-
-  output += `תג"ב אחרון לתיקון ליקויים אלו הינו: ___________`;
-
-  document.getElementById('final-output').textContent = output;
-}
-
-function copyOutput() {
-  updateFinalOutput();
-  const text = document.getElementById('final-output').textContent;
-  navigator.clipboard.writeText(text).then(() => {
-    const btn = document.querySelector('.btn-orange');
-    const orig = btn.textContent;
-    btn.textContent = '✅ הועתק בהצלחה!';
-    btn.style.background = 'linear-gradient(135deg, #5DB87A, #3A9A5C)';
-    setTimeout(() => {
-      btn.textContent = orig;
-      btn.style.background = '';
-    }, 2000);
-  });
-}
-</script>
+<script src="app.js"></script>
 </body>
 </html>
