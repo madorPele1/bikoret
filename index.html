@@ -16,23 +16,28 @@
     <p>כלי ניהול ביקורות מקצועי | הפקת סיכומים וממצאים</p>
   </div>
 </header>
+<div id="draft-indicator" style="position:fixed; bottom:20px; left:20px; background:var(--teal-dark); color:white; padding:8px 16px; border-radius:20px; font-size:13px; font-family:Heebo,sans-serif; opacity:0; transition:opacity 0.4s; z-index:999; pointer-events:none;"></div>
 
 <div class="progress-bar">
   <div class="step active" id="step-1"><span class="step-num">1</span> סוג ביקורת</div>
   <div class="step" id="step-2"><span class="step-num">2</span> פרטים כלליים</div>
-  <div class="step" id="step-3"><span class="step-num">3</span> מטרת הביקורת</div>
-  <div class="step" id="step-4"><span class="step-num">4</span> שאלות ביקורת</div>
-  <div class="step" id="step-5"><span class="step-num">5</span> מהלך הביקורת</div>
-  <div class="step" id="step-6"><span class="step-num">6</span> סיכום וממצאים</div>
+  <div class="step" id="step-3"><span class="step-num">3</span> שאלות ביקורת</div>
+  <div class="step" id="step-4"><span class="step-num">4</span> מהלך הביקורת</div>
+  <div class="step" id="step-5"><span class="step-num">5</span> סיכום וממצאים</div>
 </div>
 
 <div class="container">
+
+  <!-- Draft banner -->
+  <div id="draft-banner" style="display:none; align-items:center; justify-content:space-between; background:#E8F7F7; border:1px solid var(--teal); border-radius:10px; padding:12px 18px; margin-bottom:20px; font-size:13px; color:var(--teal-dark);">
+    <span>📂 <strong>נמצאה טיוטה שמורה</strong> – הנתונים שלך שוחזרו אוטומטית</span>
+    <button onclick="clearDraft()" style="background:none; border:1px solid var(--teal); border-radius:6px; padding:4px 10px; font-size:12px; color:var(--teal-dark); cursor:pointer; font-family:Heebo,sans-serif;">🗑 מחק טיוטה</button>
+  </div>
 
   <!-- SCREEN 1: Audit Type -->
   <div class="screen active" id="screen-1">
     <div class="page-title">בחירת סוג ביקורת</div>
     <div class="page-subtitle">ניתן לבחור יותר מסוג ביקורת אחד</div>
-
     <div class="audit-types">
       <div class="audit-type-card" data-type="digital" onclick="toggleType(this)">
         <h3>🖥️ קמפוס דיגיטלי</h3>
@@ -49,14 +54,13 @@
       <div class="audit-type-card" data-type="telb" onclick="toggleTelb(this)">
         <h3>📊 תל"ב</h3>
         <p>ביקורת תל"ב – ליבה, מתקדם, מומחיות</p>
-        <div id="telb-subtypes" style="display:none; margin-top:12px; display:none; flex-direction:column; gap:8px;">
-          <div class="telb-sub selected" data-sub="liba" onclick="selectTelbSub(event,'liba')">ליבה</div>
+        <div id="telb-subtypes" style="display:none; margin-top:12px; flex-direction:column; gap:8px;">
+          <div class="telb-sub sub-selected" data-sub="liba" onclick="selectTelbSub(event,'liba')">ליבה</div>
           <div class="telb-sub disabled-sub" data-sub="advanced" onclick="selectTelbSub(event,'advanced')">מתקדם <span class="coming-soon">בפיתוח</span></div>
           <div class="telb-sub disabled-sub" data-sub="expert" onclick="selectTelbSub(event,'expert')">מומחיות <span class="coming-soon">בפיתוח</span></div>
         </div>
       </div>
     </div>
-
     <div class="nav-buttons" style="margin-top:28px;">
       <span></span>
       <button class="btn btn-primary" onclick="goToScreen(2)">המשך ←</button>
@@ -67,7 +71,6 @@
   <div class="screen" id="screen-2">
     <div class="page-title">פרטים כלליים</div>
     <div class="page-subtitle">מלא את הפרטים הבסיסיים של הביקורת</div>
-
     <div class="card">
       <div class="card-title">נתוני הביקורת</div>
       <div id="screen2-subtitle" class="card-subtitle">כל השדות הם שדות חובה <span style="color:#E57373;">*</span></div>
@@ -103,7 +106,6 @@
           <label for="participants">משתתפים <span class="required-star" id="participants-star">*</span></label>
           <input type="text" id="participants" placeholder="שמות המשתתפים בביקורת">
         </div>
-
         <!-- Sikhot-only fields -->
         <div class="form-group full" id="sikhot-group-row" style="display:none;">
           <label>קבוצת השיחה <span class="required-star">*</span></label>
@@ -118,87 +120,68 @@
         </div>
       </div>
     </div>
-
     <div class="nav-buttons">
       <button class="btn btn-secondary" onclick="goToScreen(1)">→ חזור</button>
       <button class="btn btn-primary" onclick="goToScreen(3)">המשך ←</button>
     </div>
   </div>
 
-  <!-- SCREEN 3: Audit Goal -->
+  <!-- SCREEN 3: Questions -->
   <div class="screen" id="screen-3">
-    <div class="page-title">מטרת הביקורת</div>
-    <div class="page-subtitle">פרט את מטרות הביקורת שתיכלל בדוח</div>
-
-    <div class="card">
-      <div class="card-title">מטרת הביקורת</div>
-      <div class="form-group">
-        <label for="audit-goal">מטרת הביקורת <span class="required-star">*</span></label>
-        <textarea id="audit-goal" rows="6" placeholder="תאר את מטרות הביקורת..."></textarea>
-      </div>
-    </div>
-
+    <div class="page-title">שאלות ביקורת</div>
+    <div class="page-subtitle">חובה לענות על כל השאלות. בדירוג 2 ו-3 יש למלא הערות חובה.</div>
+    <div id="questions-container"></div>
     <div class="nav-buttons">
       <button class="btn btn-secondary" onclick="goToScreen(2)">→ חזור</button>
       <button class="btn btn-primary" onclick="goToScreen(4)">המשך ←</button>
     </div>
   </div>
 
-  <!-- SCREEN 4: Questions -->
+  <!-- SCREEN 4: Audit Progress (optional) -->
   <div class="screen" id="screen-4">
-    <div class="page-title">שאלות ביקורת</div>
-    <div class="page-subtitle">חובה לענות על כל השאלות. בדירוג 2 ו-3 יש למלא הערות חובה.</div>
-
-    <div id="questions-container"></div>
-
-    <div class="nav-buttons">
-      <button class="btn btn-secondary" onclick="goToScreen(3)">→ חזור</button>
-      <button class="btn btn-primary" onclick="goToScreen(5)">המשך ←</button>
-    </div>
-  </div>
-
-  <!-- SCREEN 5: Audit Progress -->
-  <div class="screen" id="screen-5">
     <div class="page-title">מהלך הביקורת</div>
-    <div class="page-subtitle">תאר את מהלך הביקורת שיכלל בדוח</div>
-
+    <div class="page-subtitle">שדה רשות – ניתן לדלג על מסך זה</div>
     <div class="card">
       <div class="card-title">מהלך הביקורת</div>
+      <div class="card-subtitle">שדה זה אינו חובה</div>
       <div class="form-group">
-        <label for="audit-progress">מהלך הביקורת <span class="required-star">*</span></label>
         <textarea id="audit-progress" rows="7" placeholder="תאר את מהלך הביקורת..."></textarea>
       </div>
     </div>
-
     <div class="nav-buttons">
-      <button class="btn btn-secondary" onclick="goToScreen(4)">→ חזור</button>
-      <button class="btn btn-primary" onclick="goToScreen(6)">צור סיכום ←</button>
+      <button class="btn btn-secondary" onclick="goToScreen(3)">→ חזור</button>
+      <button class="btn btn-primary" onclick="goToScreen(5)">צור סיכום ←</button>
     </div>
   </div>
 
-  <!-- SCREEN 6: Summary -->
-  <div class="screen" id="screen-6">
+  <!-- SCREEN 5: Summary -->
+  <div class="screen" id="screen-5">
     <div class="page-title">סיכום וממצאים</div>
     <div class="page-subtitle">מלא את הפרטים הנוספים ולאחר מכן הפק את הסיכום הסופי</div>
-
     <div id="summary-type-sections"></div>
-
     <div class="card" id="findings-section">
       <div class="card-title">ליקויים שנמצאו</div>
       <div class="card-subtitle">הליקויים מסוננים אוטומטית מהשאלות שסומנו כ"לא קיים"</div>
       <div id="findings-preview" class="findings-preview"></div>
     </div>
-
-    <div class="copy-btn-wrap" style="margin-top:24px; gap: 12px; display:flex; justify-content: flex-end;">
-      <button class="btn btn-secondary" onclick="goToScreen(5)">→ חזור</button>
-      <button class="btn btn-orange" id="copy-btn" onclick="copyOutput()">📋 העתק סיכום מלא</button>
+    <!-- Signature field -->
+    <div class="card" style="margin-bottom:0;">
+      <div class="card-title">חתימה</div>
+      <div class="form-group">
+        <label for="signature">נערך על ידי</label>
+        <input type="text" id="signature" placeholder="שם המבקר לחתימה בסיום הסיכום..." oninput="updateFinalOutput()">
+      </div>
     </div>
 
+    <div class="copy-btn-wrap" style="margin-top:24px; gap:12px; display:flex; justify-content:flex-end; flex-wrap:wrap;">
+      <button class="btn btn-secondary" onclick="goToScreen(4)">→ חזור</button>
+      <button class="btn btn-secondary" onclick="downloadTxt()">⬇️ הורד כ-TXT</button>
+      <button class="btn btn-orange" id="copy-btn" onclick="copyOutput()">📋 העתק סיכום מלא</button>
+    </div>
     <div id="final-output-wrap" style="margin-top:16px;">
       <div class="card-title" style="margin-bottom:12px; font-size:15px;">תצוגה מקדימה של הסיכום</div>
       <div class="summary-output" id="final-output"></div>
     </div>
-
     <!-- Appendix -->
     <div class="card" style="margin-top:32px;">
       <div class="card-title">נספח ליקויים מלא</div>
@@ -209,7 +192,6 @@
       </div>
       <div id="appendix-container"></div>
     </div>
-
   </div>
 
 </div>

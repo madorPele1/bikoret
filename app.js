@@ -260,6 +260,101 @@ let state = {
   sikhotGroup: null // 'hanikhin' | 'sgal'
 };
 
+// ─── AUTO-SAVE ───────────────────────────────────────────────
+const DRAFT_KEY = 'bikoret_draft';
+
+function saveDraft() {
+  try {
+    const draft = {
+      selectedTypes: state.selectedTypes,
+      answers: state.answers,
+      summaryTexts: state.summaryTexts,
+      hiddenFindings: [...state.hiddenFindings],
+      naTopics: [...state.naTopics],
+      naQuestions: [...state.naQuestions],
+      sikhotGroup: state.sikhotGroup,
+      fields: {
+        location: document.getElementById('location')?.value || '',
+        date: document.getElementById('date')?.value || '',
+        subject: document.getElementById('subject')?.value || '',
+        coordination: document.getElementById('coordination')?.value || '',
+        inspector: document.getElementById('inspector')?.value || '',
+        participants: document.getElementById('participants')?.value || '',
+        'audit-progress': document.getElementById('audit-progress')?.value || '',
+        'group-composition': document.getElementById('group-composition')?.value || '',
+        signature: document.getElementById('signature')?.value || ''
+      },
+      telbSelected: document.getElementById('telb-subtypes')?.style.display !== 'none'
+    };
+    localStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
+    showDraftIndicator();
+  } catch(e) {}
+}
+
+function loadDraft() {
+  try {
+    const raw = localStorage.getItem(DRAFT_KEY);
+    if (!raw) return false;
+    const draft = JSON.parse(raw);
+
+    state.selectedTypes = draft.selectedTypes || [];
+    state.answers = draft.answers || {};
+    state.summaryTexts = draft.summaryTexts || {};
+    state.hiddenFindings = new Set(draft.hiddenFindings || []);
+    state.naTopics = new Set(draft.naTopics || []);
+    state.naQuestions = new Set(draft.naQuestions || []);
+    state.sikhotGroup = draft.sikhotGroup || null;
+
+    // Restore audit type card selections
+    document.querySelectorAll('.audit-type-card').forEach(card => {
+      const t = card.dataset.type;
+      if (t === 'telb') {
+        if (state.selectedTypes.includes('telb')) {
+          card.classList.add('selected');
+          card.querySelector('#telb-subtypes').style.display = 'flex';
+        }
+      } else if (state.selectedTypes.includes(t)) {
+        card.classList.add('selected');
+      }
+    });
+
+    // Restore form fields
+    Object.entries(draft.fields || {}).forEach(([id, val]) => {
+      const el = document.getElementById(id);
+      if (el) el.value = val;
+    });
+
+    // Restore sikhot group
+    if (draft.sikhotGroup) {
+      selectSikhotGroup(draft.sikhotGroup);
+    }
+
+    updateScreen2ForSikhot();
+    return true;
+  } catch(e) { return false; }
+}
+
+function showDraftIndicator() {
+  const el = document.getElementById('draft-indicator');
+  if (!el) return;
+  el.textContent = '✓ טיוטה נשמרה';
+  el.style.opacity = '1';
+  clearTimeout(el._t);
+  el._t = setTimeout(() => { el.style.opacity = '0'; }, 2000);
+}
+
+function clearDraft() {
+  if (confirm('למחוק את הטיוטה השמורה ולהתחיל מחדש?')) {
+    localStorage.removeItem(DRAFT_KEY);
+    location.reload();
+  }
+}
+
+// Auto-save every 10 seconds + on any input
+setInterval(saveDraft, 10000);
+document.addEventListener('input', saveDraft);
+document.addEventListener('click', () => setTimeout(saveDraft, 300));
+
 function selectSikhotGroup(group) {
   state.sikhotGroup = group;
   document.querySelectorAll('.group-type-btn').forEach(b => b.classList.remove('selected'));
@@ -355,16 +450,6 @@ function validateScreen2() {
   return valid;
 }
 
-function validateScreen3() {
-  const goal = document.getElementById('audit-goal');
-  if (!goal.value.trim()) {
-    goal.classList.add('field-error');
-    return false;
-  }
-  goal.classList.remove('field-error');
-  return true;
-}
-
 function validateScreen4() {
   let valid = true;
   state.selectedTypes.forEach(type => {
@@ -398,16 +483,6 @@ function validateScreen4() {
   return valid;
 }
 
-function validateScreen5() {
-  const progress = document.getElementById('audit-progress');
-  if (!progress.value.trim()) {
-    progress.classList.add('field-error');
-    return false;
-  }
-  progress.classList.remove('field-error');
-  return true;
-}
-
 function goToScreen(n) {
   if (n === 1) {
     // always ok
@@ -422,39 +497,65 @@ function goToScreen(n) {
       return;
     }
   } else if (n === 4) {
-    if (!validateScreen3()) {
-      alert('נא למלא את מטרת הביקורת');
-      return;
-    }
-  } else if (n === 5) {
     if (!validateScreen4()) {
       alert('יש לענות על כל שאלות הביקורת.\nבדירוג 2 ו-3 יש למלא הערות חובה.');
       return;
     }
-  } else if (n === 6) {
-    if (!validateScreen5()) {
-      alert('נא למלא את מהלך הביקורת');
-      return;
-    }
+  } else if (n === 5) {
+    // screen 4 (progress) is optional – no validation
     buildSummaryScreen();
   }
 
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById('screen-' + n).classList.add('active');
 
-  for (let i = 1; i <= 6; i++) {
+  for (let i = 1; i <= 5; i++) {
     const step = document.getElementById('step-' + i);
+    if (!step) continue;
     step.classList.remove('active', 'done');
     if (i < n) step.classList.add('done');
     if (i === n) step.classList.add('active');
   }
 
-  if (n === 4) buildQuestionsScreen();
+  if (n === 3) { buildQuestionsScreen(); updateProgressCounter(); }
   window.scrollTo(0, 0);
 }
 
 function stripHtml(html) {
   return html.replace(/<[^>]+>/g, '');
+}
+
+function countAnswered() {
+  let total = 0, answered = 0;
+  state.selectedTypes.forEach(type => {
+    if (type === 'sikhot') return;
+    if (!questions[type]) return;
+    questions[type].topics.forEach((topic, topicIdx) => {
+      const topicKey = type + '_' + topicIdx;
+      if (state.naTopics.has(topicKey)) return;
+      topic.questions.forEach((q, qIdx) => {
+        const key = type + '_' + topicIdx + '_' + qIdx;
+        if (state.naQuestions.has(key)) return;
+        total++;
+        const ans = state.answers[key];
+        if (ans && ans.rating > 0) answered++;
+      });
+    });
+  });
+  return { total, answered };
+}
+
+function updateProgressCounter() {
+  const bar = document.getElementById('q-progress-bar');
+  if (!bar) return;
+  const { total, answered } = countAnswered();
+  if (total === 0) { bar.style.display = 'none'; return; }
+  const pct = Math.round((answered / total) * 100);
+  bar.style.display = '';
+  bar.querySelector('.q-progress-fill').style.width = pct + '%';
+  bar.querySelector('.q-progress-text').textContent = answered + ' / ' + total + ' שאלות נענו (' + pct + '%)';
+  bar.querySelector('.q-progress-fill').style.background =
+    pct === 100 ? 'var(--teal-dark)' : pct >= 50 ? 'var(--teal)' : 'var(--orange)';
 }
 
 function buildQuestionsScreen() {
@@ -546,6 +647,7 @@ function buildQuestionsScreen() {
           state.naTopics.add(topicKey);
         }
         buildQuestionsScreen();
+        updateProgressCounter();
       });
 
       topicHeader.appendChild(topicTitle);
@@ -591,10 +693,10 @@ function buildQuestionsScreen() {
             state.naQuestions.delete(key);
           } else {
             state.naQuestions.add(key);
-            // clear any answer/validation state
             state.answers[key] = { rating: 0, notes: '' };
           }
           buildQuestionsScreen();
+          updateProgressCounter();
         });
 
         qRow.appendChild(qText);
@@ -641,6 +743,7 @@ function buildQuestionsScreen() {
                 state.answers[key].notes = '';
                 notesArea.value = '';
               }
+              updateProgressCounter();
             });
             ratingDiv.appendChild(btn);
           });
@@ -701,9 +804,17 @@ function buildSummaryScreen() {
     sectionsDiv.appendChild(card);
   });
 
-  // Build findings
-  buildFindingsPreview();
-  buildAppendix();
+  // Show/hide findings & appendix sections based on whether non-sikhot types exist
+  const hasNonSikhot = state.selectedTypes.some(t => t !== 'sikhot');
+  const findingsSection = document.getElementById('findings-section');
+  const appendixSection = document.querySelector('#appendix-container')?.closest('.card');
+  if (findingsSection) findingsSection.style.display = hasNonSikhot ? '' : 'none';
+  if (appendixSection) appendixSection.style.display = hasNonSikhot ? '' : 'none';
+
+  if (hasNonSikhot) {
+    buildFindingsPreview();
+    buildAppendix();
+  }
   updateFinalOutput();
 }
 
@@ -908,7 +1019,6 @@ function updateFinalOutput() {
   const coord = document.getElementById('coordination').value;
   const inspector = document.getElementById('inspector').value;
   const participants = document.getElementById('participants').value;
-  const goal = document.getElementById('audit-goal').value;
   const progress = document.getElementById('audit-progress').value;
   const groupComposition = document.getElementById('group-composition') ? document.getElementById('group-composition').value : '';
 
@@ -936,7 +1046,6 @@ function updateFinalOutput() {
   if (hasSikhot && groupComposition) {
     output += `הרכב הקבוצה: ${groupComposition}\n`;
   }
-  output += `\nמטרת הביקורת:\n${goal || '___'}\n`;
   output += `\nמהלך הביקורת:\n${progress || '___'}\n`;
   output += `\n═══════════════════════════════════\n`;
   output += `סיכום וממצאים\n`;
@@ -960,6 +1069,7 @@ function updateFinalOutput() {
     }
   });
 
+  const hasNonSikhot = state.selectedTypes.some(t => t !== 'sikhot');
   const findings = getVisibleFindings();
   if (findings.length > 0) {
     output += `ליקויים:\n`;
@@ -971,8 +1081,15 @@ function updateFinalOutput() {
     output += '\n';
   }
 
-  output += `מצורף מסמך ליקויים מלא\n\n`;
-  output += `תג"ב אחרון לתיקון ליקויים אלו הינו: ___________`;
+  if (hasNonSikhot) {
+    output += `מצורף מסמך ליקויים מלא\n\n`;
+    output += `תג"ב אחרון לתיקון ליקויים אלו הינו: ___________`;
+  }
+
+  const sig = document.getElementById('signature')?.value?.trim();
+  if (sig) {
+    output += `\n\n───────────────────────────────────\nנערך על ידי: ${sig}`;
+  }
 
   document.getElementById('final-output').textContent = output;
 }
@@ -991,3 +1108,26 @@ function copyOutput() {
     }, 2000);
   });
 }
+
+// ─── EXPORT AS TXT ───────────────────────────────────────────
+function downloadTxt() {
+  updateFinalOutput();
+  const text = document.getElementById('final-output').textContent;
+  const loc = document.getElementById('location')?.value || 'ביקורת';
+  const date = document.getElementById('date')?.value || '';
+  const filename = `סיכום_ביקורת_${loc}${date ? '_' + date : ''}.txt`;
+  const blob = new Blob(['\uFEFF' + text], { type: 'text/plain;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename; a.click();
+  URL.revokeObjectURL(url);
+}
+
+// ─── INIT ────────────────────────────────────────────────────
+window.addEventListener('DOMContentLoaded', () => {
+  const hasDraft = loadDraft();
+  if (hasDraft) {
+    const banner = document.getElementById('draft-banner');
+    if (banner) banner.style.display = 'flex';
+  }
+});
