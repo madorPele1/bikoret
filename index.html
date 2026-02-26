@@ -42,10 +42,9 @@
         <h3>📁 תיקי יסוד</h3>
         <p>ביקורת תכניות הכשרה, מארזי הדרכה ומבחנים</p>
       </div>
-      <div class="audit-type-card disabled" data-type="sikhot">
+      <div class="audit-type-card" data-type="sikhot" onclick="toggleType(this)">
         <h3>💬 שיחות חתך</h3>
-        <p>שיחות חתך עם חיילים ומפקדים</p>
-        <span class="coming-soon">בפיתוח</span>
+        <p>שיחות חתך עם חניכים או סגל</p>
       </div>
       <div class="audit-type-card" data-type="telb" onclick="toggleTelb(this)">
         <h3>📊 תל"ב</h3>
@@ -71,12 +70,12 @@
 
     <div class="card">
       <div class="card-title">נתוני הביקורת</div>
-      <div class="card-subtitle">כל השדות הם שדות חובה <span style="color:#E57373;">*</span></div>
+      <div id="screen2-subtitle" class="card-subtitle">כל השדות הם שדות חובה <span style="color:#E57373;">*</span></div>
       <div class="form-grid">
         <div class="form-group">
-          <label for="location">מיקום <span class="required-star">*</span></label>
+          <label for="location">יחידה <span class="required-star" id="location-star">*</span></label>
           <select id="location">
-            <option value="">-- בחר מיקום --</option>
+            <option value="">-- בחר יחידה --</option>
             <option>בא"ח</option>
             <option>בא"פ</option>
             <option>חטיבה (בית ספר)</option>
@@ -85,24 +84,37 @@
           </select>
         </div>
         <div class="form-group">
-          <label for="date">תאריך <span class="required-star">*</span></label>
+          <label for="date">תאריך <span class="required-star" id="date-star">*</span></label>
           <input type="date" id="date">
         </div>
         <div class="form-group full">
-          <label for="subject">נושא <span class="required-star">*</span></label>
+          <label for="subject">נושא <span class="required-star" id="subject-star">*</span></label>
           <input type="text" id="subject" placeholder="נושא הביקורת">
         </div>
         <div class="form-group">
-          <label for="coordination">תיאום מול <span class="required-star">*</span></label>
+          <label for="coordination">תיאום מול <span class="required-star" id="coordination-star">*</span></label>
           <input type="text" id="coordination" placeholder="שם הגורם המתואם">
         </div>
         <div class="form-group">
-          <label for="inspector">מי ביקר <span class="required-star">*</span></label>
+          <label for="inspector">מי ביקר <span class="required-star" id="inspector-star">*</span></label>
           <input type="text" id="inspector" placeholder="שם המבקר/ים">
         </div>
         <div class="form-group full">
-          <label for="participants">משתתפים <span class="required-star">*</span></label>
+          <label for="participants">משתתפים <span class="required-star" id="participants-star">*</span></label>
           <input type="text" id="participants" placeholder="שמות המשתתפים בביקורת">
+        </div>
+
+        <!-- Sikhot-only fields -->
+        <div class="form-group full" id="sikhot-group-row" style="display:none;">
+          <label>קבוצת השיחה <span class="required-star">*</span></label>
+          <div class="group-type-selector">
+            <div class="group-type-btn" id="btn-hanikhin" onclick="selectSikhotGroup('hanikhin')">👤 חניכים</div>
+            <div class="group-type-btn" id="btn-sgal" onclick="selectSikhotGroup('sgal')">🎓 סגל</div>
+          </div>
+        </div>
+        <div class="form-group full" id="sikhot-composition-row" style="display:none;">
+          <label for="group-composition">הרכב הקבוצה</label>
+          <textarea id="group-composition" rows="3" placeholder="פרט את הרכב הקבוצה (תפקידים, מספר משתתפים וכו')..."></textarea>
         </div>
       </div>
     </div>

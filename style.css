@@ -553,3 +553,37 @@ textarea { resize: vertical; min-height: 90px; }
 .telb-sub:hover:not(.disabled-sub) { border-color: var(--teal); background: var(--teal-light); }
 .telb-sub.sub-selected { border-color: var(--teal-dark); background: var(--teal-light); color: var(--teal-dark); }
 .telb-sub.disabled-sub { opacity: 0.5; cursor: not-allowed; display: flex; align-items: center; gap: 8px; }
+
+/* Sikhot group type selector */
+.group-type-selector {
+  display: flex;
+  gap: 12px;
+  margin-top: 4px;
+}
+
+.group-type-btn {
+  flex: 1;
+  padding: 14px 20px;
+  border: 2px solid var(--border);
+  border-radius: var(--radius);
+  font-family: 'Heebo', sans-serif;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  background: var(--bg);
+  color: var(--text);
+  text-align: center;
+  transition: all 0.25s;
+  user-select: none;
+}
+
+.group-type-btn:hover {
+  border-color: var(--teal);
+  background: var(--teal-light);
+}
+
+.group-type-btn.selected {
+  border-color: var(--teal-dark);
+  background: linear-gradient(135deg, #E8F7F7 0%, #D0EEEE 100%);
+  color: var(--teal-dark);
+}

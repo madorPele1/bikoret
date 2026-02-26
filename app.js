@@ -2,7 +2,8 @@
 const auditTypes = {
   digital: 'קמפוס דיגיטלי',
   tik: 'תיקי יסוד',
-  telb: 'תל"ב – ליבה'
+  telb: 'תל"ב – ליבה',
+  sikhot: 'שיחות חתך'
 };
 
 const questions = {
@@ -204,15 +205,91 @@ const questions = {
   }
 };
 
+// Sikhot questions: each question has audience: 'both' | 'hanikhin' | 'sgal'
+const sikhotQuestions = [
+  {
+    text: 'איך אתם חווים את ההכשרה?',
+    audience: 'both'
+  },
+  {
+    text: 'האם לדעתכם התכנים בהכשרה מותאמים לתקופה?',
+    audience: 'both'
+  },
+  {
+    text: 'אם הועברו לכם הרצאות על ידי מרצי חוץ – איך היו המרצים? האם הם נגעו בתכנים הרלוונטיים והעבירו את המסרים בצורה טובה?',
+    audience: 'both'
+  },
+  {
+    text: 'האם אתם מרגישים שיש בידכם את הכלים ההדרכתיים כדי להעביר את תכני ההכשרה לחיילים?',
+    audience: 'sgal'
+  },
+  {
+    text: 'האם אתם מרגישים שהמפקדים משתמשים בכלי הדרכה חדשניים ורלוונטיים כדי להכשיר ולחנוך אתכם?',
+    audience: 'hanikhin'
+  },
+  {
+    text: 'האם אתם מקבלים חניכה ומשוב הולם על תפקודכם בהכשרה?',
+    audience: 'both'
+  },
+  {
+    text: 'איך אתם חווים את השימוש במערכת הקמפוס הדיגיטלי? האם וכיצד היא תורמת לכם?',
+    audience: 'both'
+  },
+  {
+    text: 'האם וכיצד משוקפים לכם הציונים וההישגים שלכם? באיזו מידה לדעתכם הציונים משקפים את רמתכם? האם תהליכי ההערכה/בחינה הוגנים?',
+    audience: 'hanikhin'
+  },
+  {
+    text: 'האם וכיצד משוקפים לחניכים הציונים וההישגים שלהם? באיזו מידה לדעתכם הציונים משקפים את רמת החניכים? האם תהליכי ההערכה/בחינה הוגנים?',
+    audience: 'sgal'
+  },
+  {
+    text: 'כיצד ניתן סיוע לחניכים מתקשים / חניכים שהחסירו תכנים?',
+    audience: 'both'
+  }
+];
+
 // State
 let state = {
   selectedTypes: [],
-  answers: {}, // key: "type_topicIdx_qIdx" => {rating: 0|1|2|3|'na', notes: ""}
+  answers: {}, // key: "type_topicIdx_qIdx" => {rating: 0|1|2|3, notes: ""}
   summaryTexts: {}, // key: type => text
   hiddenFindings: new Set(), // keys of findings hidden from summary (but kept in appendix)
   naTopics: new Set(),   // keys "type_topicIdx" marked as not relevant
-  naQuestions: new Set() // keys "type_topicIdx_qIdx" marked as not relevant
+  naQuestions: new Set(), // keys "type_topicIdx_qIdx" marked as not relevant
+  sikhotGroup: null // 'hanikhin' | 'sgal'
 };
+
+function selectSikhotGroup(group) {
+  state.sikhotGroup = group;
+  document.querySelectorAll('.group-type-btn').forEach(b => b.classList.remove('selected'));
+  document.getElementById('btn-' + group).classList.add('selected');
+}
+
+function updateScreen2ForSikhot() {
+  const isSikhotOnly = state.selectedTypes.length === 1 && state.selectedTypes.includes('sikhot');
+  const hasSikhot = state.selectedTypes.includes('sikhot');
+
+  // Show/hide sikhot-specific fields
+  document.getElementById('sikhot-group-row').style.display = hasSikhot ? '' : 'none';
+  document.getElementById('sikhot-composition-row').style.display = hasSikhot ? '' : 'none';
+
+  // Update required stars and subtitle
+  const requiredFields = ['location', 'date', 'subject', 'coordination', 'inspector', 'participants'];
+  if (isSikhotOnly) {
+    document.getElementById('screen2-subtitle').innerHTML = 'בשיחות חתך השדות אינם חובה';
+    requiredFields.forEach(id => {
+      const star = document.getElementById(id + '-star');
+      if (star) star.style.display = 'none';
+    });
+  } else {
+    document.getElementById('screen2-subtitle').innerHTML = 'כל השדות הם שדות חובה <span style="color:#E57373;">*</span>';
+    requiredFields.forEach(id => {
+      const star = document.getElementById(id + '-star');
+      if (star) star.style.display = '';
+    });
+  }
+}
 
 function toggleTelb(el) {
   if (el.classList.contains('disabled')) return;
@@ -244,20 +321,37 @@ function toggleType(el) {
   } else {
     state.selectedTypes.push(type);
   }
+  updateScreen2ForSikhot();
 }
 
 function validateScreen2() {
-  const fields = ['location', 'date', 'subject', 'coordination', 'inspector', 'participants'];
+  const isSikhotOnly = state.selectedTypes.length === 1 && state.selectedTypes.includes('sikhot');
+  const hasSikhot = state.selectedTypes.includes('sikhot');
   let valid = true;
-  fields.forEach(id => {
-    const el = document.getElementById(id);
-    if (!el.value.trim()) {
-      el.classList.add('field-error');
-      valid = false;
-    } else {
-      el.classList.remove('field-error');
-    }
-  });
+
+  if (!isSikhotOnly) {
+    const fields = ['location', 'date', 'subject', 'coordination', 'inspector', 'participants'];
+    fields.forEach(id => {
+      const el = document.getElementById(id);
+      if (!el.value.trim()) {
+        el.classList.add('field-error');
+        valid = false;
+      } else {
+        el.classList.remove('field-error');
+      }
+    });
+  }
+
+  if (hasSikhot && !state.sikhotGroup) {
+    document.getElementById('sikhot-group-row').style.border = '2px solid #E57373';
+    document.getElementById('sikhot-group-row').style.borderRadius = '8px';
+    document.getElementById('sikhot-group-row').style.padding = '8px';
+    valid = false;
+  } else {
+    document.getElementById('sikhot-group-row').style.border = '';
+    document.getElementById('sikhot-group-row').style.padding = '';
+  }
+
   return valid;
 }
 
@@ -274,6 +368,7 @@ function validateScreen3() {
 function validateScreen4() {
   let valid = true;
   state.selectedTypes.forEach(type => {
+    if (type === 'sikhot') return; // open-text, no validation needed
     if (!questions[type]) return;
     questions[type].topics.forEach((topic, topicIdx) => {
       const topicKey = `${type}_${topicIdx}`;
@@ -367,6 +462,53 @@ function buildQuestionsScreen() {
   container.innerHTML = '';
 
   state.selectedTypes.forEach(type => {
+
+    // --- SIKHOT: open-text questions ---
+    if (type === 'sikhot') {
+      const groupLabel = state.sikhotGroup === 'hanikhin' ? 'חניכים' : 'סגל';
+      const typeHeader = document.createElement('div');
+      typeHeader.innerHTML = `<div style="font-size:18px; font-weight:700; color:var(--orange-dark); margin-bottom:20px; margin-top:12px; display:flex; align-items:center; gap:10px;"><span style="background:var(--orange-light); padding:4px 14px; border-radius:20px;">שיחות חתך – ${groupLabel}</span></div>`;
+      container.appendChild(typeHeader);
+
+      const card = document.createElement('div');
+      card.className = 'card';
+      card.style.marginBottom = '24px';
+
+      const filteredQs = sikhotQuestions.filter(q =>
+        q.audience === 'both' || q.audience === state.sikhotGroup
+      );
+
+      filteredQs.forEach((q, idx) => {
+        const key = `sikhot_0_${idx}`;
+        if (!state.answers[key]) state.answers[key] = { rating: -1, notes: '' }; // -1 = open text mode
+
+        const qItem = document.createElement('div');
+        qItem.className = 'question-item';
+        qItem.dataset.key = key;
+
+        const qText = document.createElement('div');
+        qText.className = 'question-text';
+        qText.textContent = q.text;
+
+        const notesArea = document.createElement('textarea');
+        notesArea.className = 'question-notes visible';
+        notesArea.style.marginTop = '8px';
+        notesArea.placeholder = 'תשובה / תיאור...';
+        notesArea.value = state.answers[key].notes || '';
+        notesArea.addEventListener('input', e => {
+          state.answers[key].notes = e.target.value;
+        });
+
+        qItem.appendChild(qText);
+        qItem.appendChild(notesArea);
+        card.appendChild(qItem);
+      });
+
+      container.appendChild(card);
+      return;
+    }
+
+    // --- Standard audit types ---
     if (!questions[type]) return;
     const auditData = questions[type];
 
@@ -522,6 +664,8 @@ function buildSummaryScreen() {
   sectionsDiv.innerHTML = '';
 
   state.selectedTypes.forEach(type => {
+    if (type === 'sikhot') return; // sikhot answers shown directly in final output
+
     const typeName = auditTypes[type] || type;
     const card = document.createElement('div');
     card.className = 'card';
@@ -766,6 +910,7 @@ function updateFinalOutput() {
   const participants = document.getElementById('participants').value;
   const goal = document.getElementById('audit-goal').value;
   const progress = document.getElementById('audit-progress').value;
+  const groupComposition = document.getElementById('group-composition') ? document.getElementById('group-composition').value : '';
 
   let dateFormatted = date;
   if (date) {
@@ -773,15 +918,24 @@ function updateFinalOutput() {
     dateFormatted = d.toLocaleDateString('he-IL');
   }
 
+  const hasSikhot = state.selectedTypes.includes('sikhot');
+  const groupLabel = state.sikhotGroup === 'hanikhin' ? 'חניכים' : state.sikhotGroup === 'sgal' ? 'סגל' : '___';
+
   let output = '';
   output += `ביקורת ${state.selectedTypes.map(t => auditTypes[t]).join(' + ')}\n`;
+  if (hasSikhot && state.selectedTypes.length === 1) {
+    output += `(קבוצת שיחה: ${groupLabel})\n`;
+  }
   output += `═══════════════════════════════════\n\n`;
-  output += `מיקום: ${loc || '___'}\n`;
+  output += `יחידה: ${loc || '___'}\n`;
   output += `תאריך: ${dateFormatted || '___'}\n`;
   output += `נושא: ${subject || '___'}\n`;
   output += `תיאום מול: ${coord || '___'}\n`;
   output += `מי ביקר: ${inspector || '___'}\n`;
   output += `משתתפים: ${participants || '___'}\n`;
+  if (hasSikhot && groupComposition) {
+    output += `הרכב הקבוצה: ${groupComposition}\n`;
+  }
   output += `\nמטרת הביקורת:\n${goal || '___'}\n`;
   output += `\nמהלך הביקורת:\n${progress || '___'}\n`;
   output += `\n═══════════════════════════════════\n`;
@@ -790,8 +944,20 @@ function updateFinalOutput() {
 
   state.selectedTypes.forEach(type => {
     const typeName = auditTypes[type] || type;
-    output += `${typeName}:\n`;
-    output += `${state.summaryTexts[type] || '___'}\n\n`;
+    if (type === 'sikhot') {
+      output += `שיחות חתך – ${groupLabel}:\n`;
+      const filteredQs = sikhotQuestions.filter(q => q.audience === 'both' || q.audience === state.sikhotGroup);
+      filteredQs.forEach((q, idx) => {
+        const key = `sikhot_0_${idx}`;
+        const ans = state.answers[key];
+        output += `\nש: ${q.text}\n`;
+        output += `ת: ${(ans && ans.notes) ? ans.notes : '___'}\n`;
+      });
+      output += '\n';
+    } else {
+      output += `${typeName}:\n`;
+      output += `${state.summaryTexts[type] || '___'}\n\n`;
+    }
   });
 
   const findings = getVisibleFindings();
