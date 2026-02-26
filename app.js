@@ -804,17 +804,9 @@ function buildSummaryScreen() {
     sectionsDiv.appendChild(card);
   });
 
-  // Show/hide findings & appendix sections based on whether non-sikhot types exist
-  const hasNonSikhot = state.selectedTypes.some(t => t !== 'sikhot');
-  const findingsSection = document.getElementById('findings-section');
-  const appendixSection = document.querySelector('#appendix-container')?.closest('.card');
-  if (findingsSection) findingsSection.style.display = hasNonSikhot ? '' : 'none';
-  if (appendixSection) appendixSection.style.display = hasNonSikhot ? '' : 'none';
-
-  if (hasNonSikhot) {
-    buildFindingsPreview();
-    buildAppendix();
-  }
+  // Build findings
+  buildFindingsPreview();
+  buildAppendix();
   updateFinalOutput();
 }
 
@@ -1069,7 +1061,6 @@ function updateFinalOutput() {
     }
   });
 
-  const hasNonSikhot = state.selectedTypes.some(t => t !== 'sikhot');
   const findings = getVisibleFindings();
   if (findings.length > 0) {
     output += `ליקויים:\n`;
@@ -1081,10 +1072,8 @@ function updateFinalOutput() {
     output += '\n';
   }
 
-  if (hasNonSikhot) {
-    output += `מצורף מסמך ליקויים מלא\n\n`;
-    output += `תג"ב אחרון לתיקון ליקויים אלו הינו: ___________`;
-  }
+  output += `מצורף מסמך ליקויים מלא\n\n`;
+  output += `תג"ב אחרון לתיקון ליקויים אלו הינו: ___________`;
 
   const sig = document.getElementById('signature')?.value?.trim();
   if (sig) {
